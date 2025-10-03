@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Shopify Webhook Handler - Receives, verifies, and forwards webhooks to Maistro API
+
+Parameters:
+  ShopifySecret:
+    Type: String
+    NoEcho: true
+    Description: Shopify webhook secret for signature verification
+  
+  MaistroApiKey:
+    Type: String
+    NoEcho: true
+    Description: API key for Maistro authentication
+  
+  MaistroInstanceId:
+    Type: String
+    Description: Maistro instance ID (e.g., my-instance)
+  
+  MaistroOverrideAgent:
+    Type: String
+    Default: test_order_fulfilled
+    Description: Override agent parameter for Maistro API
+  
+  MaistroDebug:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Enable debug mode for Maistro API
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.13
+    Architectures:
+      - x86_64
+
+Resources:
+  ShopifyWebhookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          SHOPIFY_SECRET: !Ref ShopifySecret
+          MAISTRO_API_KEY: !Ref MaistroApiKey
+          MAISTRO_INSTANCE_ID: !Ref MaistroInstanceId
+          MAISTRO_OVERRIDE_AGENT: !Ref MaistroOverrideAgent
+          MAISTRO_DEBUG: !Ref MaistroDebug
+      Events:
+        WebhookApi:
+          Type: Api
+          Properties:
+            Path: /webhook
+            Method: post
+      Tags:
+        Application: ShopifyWebhookHandler
+
+  ShopifyWebhookFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ShopifyWebhookFunction}
+      RetentionInDays: 7
+
+Outputs:
+  WebhookApiUrl:
+    Description: API Gateway endpoint URL for Shopify webhook
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/webhook
+  
+  FunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt ShopifyWebhookFunction.Arn
+  
+  FunctionName:
+    Description: Lambda Function Name
+    Value: !Ref ShopifyWebhookFunction
