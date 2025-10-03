@@ -13,9 +13,9 @@ Parameters:
     NoEcho: true
     Description: API key for Maistro authentication
   
-  MaistroInstanceId:
+  MaistroInstanceUrl:
     Type: String
-    Description: Maistro instance ID (e.g., my-instance)
+    Description: Full Maistro instance URL (e.g., https://api-usw.neuralseek.com/v1/my-instance/maistro)
   
   MaistroOverrideAgent:
     Type: String
@@ -48,7 +48,7 @@ Resources:
         Variables:
           SHOPIFY_SECRET: !Ref ShopifySecret
           MAISTRO_API_KEY: !Ref MaistroApiKey
-          MAISTRO_INSTANCE_ID: !Ref MaistroInstanceId
+          MAISTRO_INSTANCE_URL: !Ref MaistroInstanceUrl
           MAISTRO_OVERRIDE_AGENT: !Ref MaistroOverrideAgent
           MAISTRO_DEBUG: !Ref MaistroDebug
       Events:

@@ -16,7 +16,7 @@ This AWS SAM application receives Shopify webhooks, verifies their HMAC signatur
 - [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
 - Python 3.13
 - Shopify webhook secret
-- Maistro API key
+- Maistro API key and instance URL
 
 ## Project Structure
 
@@ -49,7 +49,11 @@ During the guided deployment, you'll be prompted for:
 - **AWS Region**: Your preferred region (e.g., `us-east-1`)
 - **ShopifySecret**: Your Shopify webhook secret (found in Shopify Admin → Settings → Notifications)
 - **MaistroApiKey**: Your Maistro API key
-- **MaistroInstanceId**: Your Maistro instance ID (e.g., `my-instance`)
+- **MaistroInstanceUrl**: Full Maistro instance URL including region and instance ID
+  - US West: `https://api-usw.neuralseek.com/v1/YOUR-INSTANCE-ID/maistro`
+  - US East: `https://api-use.neuralseek.com/v1/YOUR-INSTANCE-ID/maistro`
+  - Europe: `https://api-eu.neuralseek.com/v1/YOUR-INSTANCE-ID/maistro`
+  - Asia Pacific: `https://api-ap.neuralseek.com/v1/YOUR-INSTANCE-ID/maistro`
 - **MaistroOverrideAgent**: Override agent value (default: `test_order_fulfilled`)
 - **MaistroDebug**: Enable debug mode (default: `false`, options: `true` or `false`)
 - Confirm changes and allow SAM to create IAM roles
@@ -117,13 +121,26 @@ aws logs tail /aws/lambda/shopify-webhook-handler-ShopifyWebhookFunction-xxxxx -
 
 ### Environment Variables (configured during deployment)
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `SHOPIFY_SECRET` | Shopify webhook secret for signature verification | Yes | - |
-| `MAISTRO_API_KEY` | Maistro API authentication key | Yes | - |
-| `MAISTRO_INSTANCE_ID` | Maistro instance ID | Yes | - |
-| `MAISTRO_OVERRIDE_AGENT` | Override agent parameter for Maistro | No | `test_order_fulfilled` |
-| `MAISTRO_DEBUG` | Enable debug mode | No | `false` |
+| Variable | Description | Required | Default | Example |
+|----------|-------------|----------|---------|---------|
+| `SHOPIFY_SECRET` | Shopify webhook secret for signature verification | Yes | - | - |
+| `MAISTRO_API_KEY` | Maistro API authentication key | Yes | - | - |
+| `MAISTRO_INSTANCE_URL` | Full Maistro instance URL with region | Yes | - | `https://api-usw.neuralseek.com/v1/my-instance/maistro` |
+| `MAISTRO_OVERRIDE_AGENT` | Override agent parameter for Maistro | No | `test_order_fulfilled` | - |
+| `MAISTRO_DEBUG` | Enable debug mode | No | `false` | - |
+
+### NeuralSeek Regions
+
+The `MAISTRO_INSTANCE_URL` should include the appropriate regional endpoint:
+
+| Region | Base URL |
+|--------|----------|
+| US West | `https://api-usw.neuralseek.com` |
+| US East | `https://api-use.neuralseek.com` |
+| Europe | `https://api-eu.neuralseek.com` |
+| Asia Pacific | `https://api-ap.neuralseek.com` |
+
+Format: `{BASE_URL}/v1/{YOUR-INSTANCE-ID}/maistro`
 
 ### Maistro API Headers
 
@@ -149,7 +166,7 @@ Or to update specific parameters:
 ```bash
 sam deploy --parameter-overrides \
   ShopifySecret="new-secret" \
-  MaistroInstanceId="your-instance" \
+  MaistroInstanceUrl="https://api-eu.neuralseek.com/v1/your-instance/maistro" \
   MaistroOverrideAgent="new-agent"
 ```
 
@@ -172,7 +189,8 @@ sam deploy --parameter-overrides \
 ### Maistro forwarding fails
 
 - Verify `MAISTRO_API_KEY` is correct
-- Verify `MAISTRO_INSTANCE_ID` matches your NeuralSeek instance
+- Verify `MAISTRO_INSTANCE_URL` is correctly formatted with the right region
+- Ensure the instance ID in the URL matches your NeuralSeek instance
 - Review CloudWatch logs for HTTP error codes
 - Ensure Lambda has internet access (check VPC configuration if applicable)
 
@@ -196,11 +214,17 @@ sam delete
 
 Modify the `headers` dictionary in `forward_to_maistro` function in `lambda/app.py`.
 
+### Change region
+
+Update the `MaistroInstanceUrl` parameter during deployment to point to a different NeuralSeek region.
+
 ## Support
 
 For issues related to:
 - **AWS SAM/Lambda**: Check [AWS SAM documentation](https://docs.aws.amazon.com/serverless-application-model/)
 - **Shopify Webhooks**: Check [Shopify webhook documentation](https://shopify.dev/docs/api/admin-rest/latest/resources/webhook)
 - **Maistro API**: Contact NeuralSeek support
+
+---
 
 This code was generated or assisted by AI (Claude). The author(s) make no claim of originality and provide it as-is, with no warranty or guarantees of correctness, fitness for purpose, or ownership.

@@ -43,7 +43,7 @@ def forward_to_maistro(
     api_key: str,
     override_agent: str,
     debug: str,
-    instance_id: str = "my-instance"
+    instance_url: str
 ) -> Tuple[int, str]:
     """
     Forward the webhook payload to Maistro API using headers.
@@ -53,13 +53,11 @@ def forward_to_maistro(
         api_key: Maistro API key
         override_agent: Override agent value
         debug: Debug flag value
-        instance_id: Maistro instance ID
+        instance_url: Full Maistro instance URL
     
     Returns:
         Tuple of (status_code, response_body)
     """
-    url = f"https://api-usw.neuralseek.com/v1/{instance_id}/maistro"
-    
     headers = {
         'Content-Type': 'application/json',
         'apikey': api_key,
@@ -70,7 +68,7 @@ def forward_to_maistro(
     
     try:
         req = urllib.request.Request(
-            url,
+            instance_url,
             data=payload,
             headers=headers,
             method='POST'
@@ -109,11 +107,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     # Get environment variables
     shopify_secret = os.environ.get('SHOPIFY_SECRET')
     maistro_api_key = os.environ.get('MAISTRO_API_KEY')
-    maistro_instance_id = os.environ.get('MAISTRO_INSTANCE_ID', 'my-instance')
+    maistro_instance_url = os.environ.get('MAISTRO_INSTANCE_URL')
     maistro_override_agent = os.environ.get('MAISTRO_OVERRIDE_AGENT', 'test_order_fulfilled')
     maistro_debug = os.environ.get('MAISTRO_DEBUG', 'false')
     
-    if not shopify_secret or not maistro_api_key or not maistro_instance_id:
+    if not shopify_secret or not maistro_api_key or not maistro_instance_url:
         print("Error: Missing required environment variables")
         return {
             'statusCode': 500,
@@ -164,7 +162,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         maistro_api_key,
         maistro_override_agent,
         maistro_debug,
-        maistro_instance_id
+        maistro_instance_url
     )
     
     if 200 <= status_code < 300:
